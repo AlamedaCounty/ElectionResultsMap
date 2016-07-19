@@ -1,0 +1,278 @@
+/*** Election Results styles ***/
+html, body {
+    height: 100%;
+    min-height: 100%;
+}
+
+#navPreload {
+    position:absolute;
+    padding:0px;
+    top:0px;
+    left:0px;
+    right:0px;
+    height:50px;
+    background:#003267;
+}
+
+#mapDiv {
+    position:absolute;
+    height:auto;
+    bottom:0;
+    top:50px;
+    left:0;
+    right:0;
+}
+
+#loadingImg {
+    position:absolute; 
+    left:50%; 
+    top:50%; 
+    margin-left: -16px;
+    margin-top: -16px; 
+    z-index:100;
+}
+
+.navbar-dark {
+    background-color: #003267;
+    border-color: #003267;
+    color: #ffffff;
+}
+
+.navbar-brand {
+    position:absolute;
+    margin-top:-16px;
+    margin-left:-16px;
+}
+
+span.glyphicon-cog {
+    font-size: 1.7em;
+}
+
+.buttonCog {
+    top: 5px;
+    right: 0px;
+    position: absolute;
+    background:none;
+    box-shadow:none;
+    color:white;
+    outline: 0 none;
+    border: 0 none;
+}
+
+.buttonCog:hover {
+    background: none;
+    color:gray;
+    box-shadow:none;
+    outline: 0;
+    border: 0 none;
+}
+
+.buttonCog:focus {
+    background: none;
+    color:white;
+    box-shadow:none;
+    outline: 0;
+    border: 0 none;
+}
+
+.buttonRemove {
+    padding-top:10px;
+    padding-right:10px;
+    top:0px;
+    right:0px;
+    background:none;
+    box-shadow:none;
+    color:gray;
+    outline:0 none;
+    border:0 none;
+}
+
+.buttonRemove:hover {
+    background: none;
+    color:black;
+    box-shadow:none;
+    outline: 0;
+    border: 0 none;
+}
+
+.buttonRemove:focus {
+    background: none;
+    color:gray;
+    box-shadow:none;
+    outline: 0;
+    border: 0 none;
+}
+
+.label {
+    display: inline-block;
+    max-width: 600px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.label-primary {
+    background:#003267;
+    top: 65px;
+    left: 15px;
+    position: absolute;
+}
+
+#raceSelectorWrapper {
+    top: 105px;
+    left: 0px;
+    position: absolute;
+}
+
+#overallResultsPanelWrapper {
+    top: 150px;
+    left: 15px;
+    position: absolute;
+}
+
+.panel-primary {
+    height:none;
+    padding-bottom:0px;
+    padding-right:0px;
+    margin-left:0px;
+    margin-right:0px;
+    max-width:500px;
+    max-height:360px;
+    overflow-y: auto;
+    z-index:100;
+}
+
+.panel-body {
+    width:360px;
+    padding-bottom:10px;
+    padding-right:0px;
+    margin-left:0px;
+    margin-right:20px;
+}
+
+.panel-heading-hidden {
+    padding-top:0px;
+    padding-right:0px;
+    padding-left:0px;
+    padding-bottom:0px;
+    max-height:0px;
+    height:0px;
+    border:0 none;
+    background:none;
+}
+
+.img-candidate-swatch
+{
+    height:20px;
+    width: 20px;
+    background-color: #ffffff;
+}
+
+/*** iPhone4 ***/
+@media only screen
+and (min-device-width : 320px) {
+    
+    .label {
+        max-width: 290px;
+    }
+    
+    .panel-primary {
+        height:130px;
+        max-width:290px;
+        max-height:130px;
+    }
+   
+    .panel-body {
+        width:270px;
+    }
+}
+
+/*** iPhone5 ***/
+@media only screen
+and (min-device-height : 568px) {
+    
+    .label {
+        max-width: 290px;
+    }
+    
+    .panel-primary {
+        height:220px;
+        max-width:290px;
+        max-height:220px;
+    }
+    
+    .panel-body {
+        width:270px;
+    }
+}
+
+/*** iPhone6 ***/
+@media only screen
+and (min-device-width : 375px) {
+    
+    .label {
+        max-width: 345px;
+    }
+    
+    .panel-primary {
+        height:320px;
+        max-width:500px;
+        max-height:320px;
+    }
+    
+    .panel-body {
+        width:320px;
+    }
+}
+
+/*** iPhone 6+ ***/
+@media only screen
+and (min-device-width : 414px) {
+    
+    .label {
+        max-width: 360px;
+    }
+    
+    .panel-primary {
+        height:none;
+        max-width:500px;
+        max-height:360px;
+    }
+    
+    .panel-body {
+        width:320px;
+    }
+    
+}
+
+/*** other ***/
+@media only screen
+and (min-device-width : 415px) {
+    
+    .label {
+        max-width: 1000px;
+    }
+    
+    .panel-primary {
+        height:none;
+        max-width:500px;
+        max-height:360px;
+    }
+    
+    .panel-body {
+        width:320px;
+    }
+    
+}
+
+
+
+
+
+
+
+
+
+
+
