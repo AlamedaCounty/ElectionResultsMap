@@ -10,5 +10,5 @@ You should be able to use this code for your own county by creating your own pre
 ## How can I contribute?
 You can make some great contributions to this code simply by submitting pull requests! It is intended as a starting point, so that we don't all have to create our election results maps from scratch. Here are some ideas:
 * Create a new version of the ElectionResults.json file - this file can probably be optimized to make it clearer to read
-* Create a MapBox version! - This would be great! I originally wanted to do this in MapBox and geojson, but our layers were in ESRI format, so it was easier
+* Create a MapBox version! - This would be great! I originally wanted to do this in MapBox and geojson, but our layers were in ESRI format.
 * Create a Leaflet version!
