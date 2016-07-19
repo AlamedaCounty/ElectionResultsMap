@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        
+        <link rel="icon" href="favicon.ico" type="image/x-icon" />
+        
+        <title>Election Results</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+            
+        <!-- Bootstrap -->
+        <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" media="screen">
+            
+        <!-- CSS -->
+        <link rel="stylesheet" type="text/css" href="//js.arcgis.com/3.15/esri/css/esri.css">
+        <link rel="stylesheet" type="text/css" href="/css/bootstrapmap.css">
+        <link rel="stylesheet" type="text/css" href="/css/electionResults.css">
+        
+        <!-- Detect older unusable browser versions -->
+        <script>
+        
+            function detectIE() {
+                var ua = window.navigator.userAgent;
+            
+                var msie = ua.indexOf('MSIE ');
+                if (msie > 0) {
+                    // IE 10 or older => return version number
+                    return parseInt(ua.substring(msie + 5, ua.indexOf('.', msie)), 10);
+                }
+            
+                var trident = ua.indexOf('Trident/');
+                if (trident > 0) {
+                    // IE 11 => return version number
+                    var rv = ua.indexOf('rv:');
+                    return parseInt(ua.substring(rv + 3, ua.indexOf('.', rv)), 10);
+                }
+            
+                var edge = ua.indexOf('Edge/');
+                if (edge > 0) {
+                    // Edge (IE 12+) => return version number
+                    return parseInt(ua.substring(edge + 5, ua.indexOf('.', edge)), 10);
+                }
+            
+                // other browser
+                return false;
+            }
+        
+            if (detectIE()) {
+                if (detectIE() < 10) {
+                    alert("This site is not compatible with versions of IE < 10.0. Please turn off compatibility mode, or try with another browser or later version of IE. Redirecting to the main results page.");
+                    window.location.href = "http://www.acgov.org/rov/current_election/229/menuM.htm";
+                }
+            }
+        
+        </script>
+        
+    </head>
+    <body>
+        
+        <!-- Background navbar - shows when the navbar is not yetloaded -->
+        <div id="navPreload">
+        </div>
+        
+        <!-- Map elements -->
+        <div class="container-fluid" style="padding:0px;">
+            <div id="mapDiv">
+                <img id="loadingImg" src="/images/loading.gif" />
+            </div>
+        </div>
+        
+        <!-- Navbar Elements -->
+        <div class="container overlap">
+            <nav class="navbar navbar-dark navbar-fixed-top hidden" id="mainNavbar">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="#">
+                            <img alt="Election Results" src="/images/brandingImage260x50.png">
+                                </a>
+                        <button type="button" id="cogButton" class="btn btn-default buttonCog" data-toggle="modal" data-target="#cogModal"><span class="glyphicon glyphicon-cog"></span></button>
+                    </div>
+                </div>
+            </nav>
+        </div>
+        
+        <!-- Modal for display when navbar cog button clicked -->
+        <div id="cogModal" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Election Results</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p><button type="button" id="refreshButton" class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span>&nbsp;&nbsp;Get latest results</button></p>
+                        <p><button type="button" id="showHideButton" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-minus-sign"></span>&nbsp;&nbsp;Hide overall results</button></p>
+                        <hr>
+                        <h3 id="disclaimer-title"><a href="http://www.acgov.org/government/legal.htm">Legal/Disclaimers</a></h3>
+                        <p id="disclaimer-body">Alameda County &copy; 2016 - All Rights Reserved</p>
+                        <h3 id="attributions-title">Additional Software/Content Terms</h3>
+                        <p>This application uses the following software and licenses:</p>
+                        <h5><a href="https://github.com/twbs/bootstrap/blob/master/LICENSE">Bootstrap</a></h5>
+                        <h5><a href="https://github.com/Esri/bootstrap-map-js/blob/master/license.txt">bootstrap-map-js</a></h5>
+                        <h5><a href="https://developers.arcgis.com/terms/">ESRI ArcGIS</a></h5>
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal for display when error occurs -->
+        <div id="errorModal" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Error</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p><span class="glyphicon glyphicon-warning-sign"></span>&nbsp;&nbsp;<div id="errorMessage">An error occurred loading election data.</div></p>
+                        <p><button type="button" id="retryLoadButton" class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span>&nbsp;&nbsp;Retry loading</button></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Elements overlaid on top of map -->
+        <div id="overlaidControls" class="hidden">
+            <div id="electionTitleWrapper">
+                <h3><span id="electionTitleLabel" class="label label-primary pull-left">Name of Election</span></h3>
+            </div>
+            <div id="raceSelectorWrapper">
+                <div class="container-fluid">
+                    <div class="form-inline">
+                        <div class="form-group">
+                            <select class="form-control" id="raceSelector">
+                                <option value="Registration and Turnout" selected="selected">Registration and Turnout</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="overallResultsPanelWrapper">
+                <!-- revise and get working in conjuction with data -->
+                <div class="panel panel-primary" id="overallResultsPanel">
+                    <div class="panel-heading panel-heading-hidden">
+                        <button type="button" id="removeButton" class="btn btn-default buttonRemove pull-right"><span class="glyphicon glyphicon-remove"></span></button>
+                    </div>
+                    <div class="panel-body">
+                        <p align="left" id="raceNameLine"><B>Registration and Turnout</b></p>
+                        <p align="left" id="precinctsReportedLine">Precincts Reported:</p>
+                        <p align="left" id="percentageRequiredToPassLine" class="hidden"><font style="color:red;">Percentage</font></p>
+                        <table style="width:100%;">
+                            <tr><td>
+                                <table class="table" id="overallResultsTable" style="width:100%;">
+                                    <tr><th style="text-align:left;">Candidate</th><th style="text-align:right;">Votes</th></tr>
+                                    <tr><td style="text-align:left;"><img src="" class="img-candidate-swatch" style="background-color:#669900;">&nbsp;Candidate1</td><td style="text-align:right;">101</td></tr>
+                                </table>
+                            </td></tr>
+                        <tr><td style="text-align:right;"><div id="lastUpdatedDateTime"><i>last updated 10/11/2015</i></div></td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <script type="text/javascript">
+            var package_path = "/js";
+            var dojoConfig = {
+                packages: [{
+                           name: "application",
+                           location: package_path
+                           }]
+            };
+        </script>
+       
+        <script src="//js.arcgis.com/3.15compact"></script>
+        
+        <script>
+            
+            require(["esri/map",
+                     "application/bootstrapmap",
+                     "esri/InfoTemplate",
+                     "esri/layers/FeatureLayer",
+                     "esri/layers/LabelClass",
+                     "esri/Color",
+                     "esri/symbols/SimpleLineSymbol",
+                     "esri/symbols/SimpleFillSymbol",
+                     "esri/symbols/TextSymbol",
+                     "esri/renderers/ClassBreaksRenderer",
+                     "esri/graphicsUtils",
+                     "dojo/dom",
+                     "dojo/on",
+                     "dojo/_base/xhr",
+                     "dojo/domReady!"],
+                    function(Map,
+                             BootstrapMap,
+                             InfoTemplate,
+                             FeatureLayer,
+                             LabelClass,
+                             Color,
+                             SimpleLineSymbol,
+                             SimpleFillSymbol,
+                             TextSymbol,
+                             ClassBreaksRenderer,
+                             graphicsUtils,
+                             dom,
+                             on,
+                             xhr) {
+                    
+                    // global variables for JS control elements
+                    var REGISTRATION_TURNOUT = "Registration and Turnout";
+                    var loading = dom.byId("loadingImg");
+                    var mainNavbar = dom.byId("mainNavbar");
+                    var refreshButton = dom.byId("refreshButton");
+                    var retryLoadButton = dom.byId("retryLoadButton");
+                    var removeButton = dom.byId("removeButton");
+                    var showHideButton = dom.byId("showHideButton");
+                    var electionTitleWrapper = dom.byId("electionTitleWrapper");
+                    var electionTitleLabel = dom.byId("electionTitleLabel");
+                    var overallResultsPanelWrapper = dom.byId("overallResultsPanelWrapper");
+                    var raceNameLine = dom.byId("raceNameLine");
+                    var precinctsReportedLine = dom.byId("precinctsReportedLine");
+                    var percentageRequiredToPassLine = dom.byId("percentageRequiredToPassLine");
+                    var overallResultsTable = dom.byId("overallResultsTable");
+                    var lastUpdatedDateTime = dom.byId("lastUpdatedDateTime");
+                    var lastUpdated = "";
+                    var raceSelector = dom.byId("raceSelector");
+                    var errorMessage = dom.byId("errorMessage");
+                    var overallResultsShouldShow = true;
+                    var featureLayerNeedsUpdateAfterAddingToMap = false;
+                    var baseMapName = "";
+                    var electionName = "";
+                    var initialZoom = 1;
+                    var mapCenterLatLong = [];
+                    var precinctIdentifier = "";
+                    var cityIdentifier = "";
+                    var precinctsFeatureLayerURL = "";
+                    var countyBoundaryFeatureLayerURL = "";
+                    var citiesFeatureLayerURL = "";
+                    var races = {};
+                    var raceLoadCounter = 0;
+                    var raceIdsByIndex = [];
+                    var candidates = {};
+                    var registrationAndTurnout = {};
+                    var map;
+                    var featureLayer;
+                    var countyBoundaryFeatureLayer;
+                    var citiesFeatureLayer;
+                    var popup;
+                    var template;
+                    var totalPrecinctCount = 0;
+                    var totalReportedPrecincts = 0;
+                    var totalVBMPrecincts = 0;
+                    var minScaleForLabelsToShow = 0;
+                    var maxScaleForLabelsToShow = 0;
+                    var minScaleForCityLabelsToShow = 0;
+                    var maxScaleForCityLabelsToShow = 0;
+                    var vbmColor = "white";
+                    var tiedVoteColor = "white";
+                    var notReportedColor = "white";
+                    var reportedColor = "white";
+                    var vbmMessage = "Mandatory Vote by Mail Precinct";
+                    var tiedVoteMsg = "Tied Vote";
+                    var notReportedMsg = "Not Reported";
+                    var lastFileUpdateTimestamp;
+                    var savedLastFileUpdateTimestamp;
+                    var precinctOutlineColor = new Color([55,55,55,1.0]);
+                    var overallTotalVotes = 0;
+                    
+                    loadResults(); // load all election data
+                    
+                    function loadBaseMap() {
+                    
+                        map = BootstrapMap.create("mapDiv",{
+                                                  basemap:baseMapName,
+                                                  sliderPosition:"bottom-right",
+                                                  logo:false,
+                                                  center: mapCenterLatLong,
+                                                  zoom: initialZoom,
+                                                  showLabels : true
+                                                  });
+                        removeRefLayerFromBasemap();
+                        setPopupWindowFormat();
+                    
+                        // define base event listeners
+                        on(map, "update-start", mapUpdatesAreBeginning);
+                        on(map, "update-end", mapUpdatesAreEnding);
+                        on(refreshButton, "click", reloadSelf);
+                        on(removeButton, "click", removeOverallResults);
+                        on(showHideButton, "click", toggleOverallResultsShowing);
+                        on(raceSelector, "change", changeRace);
+                    
+                        loadFeatureLayer();
+                    
+                    }
+                    
+                    function removeRefLayerFromBasemap() {
+                        for(var j = 0; j < map.layerIds.length; j++) {
+                            var layer = map.getLayer(map.layerIds[j]);
+                            if (layer._isRefLayer) {
+                                layer.visible = false;
+                                layer.opacity = 0.0;
+                            }
+                        }
+                    }
+                    
+                    // load layer containing precinct boundaries and labels
+                    function loadFeatureLayer() {
+                    
+                        featureLayer = new FeatureLayer(precinctsFeatureLayerURL,
+                                                        { mode: FeatureLayer.MODE_SNAPSHOT,
+                                                        id:"precinctsLayer",
+                                                        outFields: ["*"],
+                                                        infoTemplate: template
+                                                        });
+                    
+                        // set labels for layer
+                        var precinctLabel = new TextSymbol().setColor(precinctOutlineColor);
+                        precinctLabel.font.setSize("10pt");
+                        precinctLabel.font.setFamily("arial");
+                        var labelJson = {
+                            "labelExpressionInfo": {"value": "{" + precinctIdentifier + "}"},
+                            "minScale":minScaleForLabelsToShow,
+                            "maxScale":maxScaleForLabelsToShow
+                        };
+                        var labelClass = new LabelClass(labelJson);
+                        labelClass.symbol = precinctLabel;
+                        featureLayer.setLabelingInfo([ labelClass ]);
+                    
+                        var symbol = precinctFillAndOutlineSymbolWithColor(new Color([150, 150, 150, 0.0]));
+                        var renderer = new ClassBreaksRenderer(symbol, featureLayer.objectIdField);
+                        featureLayer.setRenderer(renderer);
+                    
+                        // define event listener for feature layer
+                        featureLayer.on("load", precinctsLayerWasLoaded);
+                    
+                        // add layer to map
+                        map.addLayer(featureLayer);
+                    
+                        // set timer to check for new results every 60 seconds
+                        setInterval(function(){ checkLastUpdateTimestamp(); }, 60000);
+                    
+                        loadCitiesLayer();
+                    
+                    }
+                    
+                    function loadCitiesLayer() {
+                    
+                        citiesFeatureLayer = new FeatureLayer(citiesFeatureLayerURL,
+                                                          { mode: FeatureLayer.MODE_SNAPSHOT,
+                                                          id:"citiesLayer",
+                                                          outFields: ["*"]
+                                                          });
+                    
+                        var boundaryColor = new Color([0,0,0,1.0]);
+
+                        // set labels for layer
+                        var cityLabel = new TextSymbol().setColor(boundaryColor).setHaloColor(new Color([255,255,255,1.0])).setHaloSize(1.0);
+                        cityLabel.font.setSize("14pt");
+                        cityLabel.font.setFamily("arial");
+                        var labelJson = {
+                            "labelExpressionInfo": {"value": "{" + cityIdentifier + "}"},
+                            "minScale":minScaleForCityLabelsToShow,
+                            "maxScale":maxScaleForCityLabelsToShow
+                        };
+                        var labelClass = new LabelClass(labelJson);
+                        labelClass.symbol = cityLabel;
+                        citiesFeatureLayer.setLabelingInfo([ labelClass ]);
+                    
+                        // set a class breaks renderer with empty polygons
+                        var lineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID,boundaryColor,2);
+                        var symbol = new SimpleFillSymbol();
+                        symbol.setColor(new Color([150, 150, 150, 0.0]));
+                        symbol.setOutline(lineSymbol);
+                        var renderer = new ClassBreaksRenderer(symbol, citiesFeatureLayer.objectIdField);
+                        citiesFeatureLayer.setRenderer(renderer);
+                    
+                        citiesFeatureLayer.setMinScale(0);
+                        citiesFeatureLayer.setMaxScale(0);
+                    
+                        // add layer to map
+                        map.addLayer(citiesFeatureLayer);
+                    
+                        loadCountyBoundaryLayer();
+                    
+                    }
+                    
+                    function loadCountyBoundaryLayer() {
+                    
+                        countyBoundaryFeatureLayer = new FeatureLayer(countyBoundaryFeatureLayerURL,
+                                                                  { mode: FeatureLayer.MODE_SNAPSHOT,
+                                                                  id:"countyBoundaryLayer",
+                                                                  outFields: ["*"]
+                                                                  });
+                    
+                        var boundaryColor = new Color([0,0,0,1.0]);
+                    
+                        // set a class breaks renderer with empty polygons
+                        var lineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID,boundaryColor,2);
+                        var symbol = new SimpleFillSymbol();
+                        symbol.setColor(new Color([150, 150, 150, 0.0]));
+                        symbol.setOutline(lineSymbol);
+                        var renderer = new ClassBreaksRenderer(symbol, countyBoundaryFeatureLayer.objectIdField);
+                        countyBoundaryFeatureLayer.setRenderer(renderer);
+                    
+                        countyBoundaryFeatureLayer.setMinScale(0);
+                        countyBoundaryFeatureLayer.setMaxScale(0);
+                    
+                        // add layer to map
+                        map.addLayer(countyBoundaryFeatureLayer);
+                    
+                    }
+                    
+                    function precinctFillAndOutlineSymbolWithColor(color) {
+                        var lineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID,precinctOutlineColor,1);
+                        var symbol = new SimpleFillSymbol();
+                        symbol.setColor(color);
+                        symbol.setOutline(lineSymbol);
+                        return symbol;
+                    }
+                    
+                    function setPopupWindowFormat() {
+                        if (map.width <= 320) {
+                            map.infoWindow.resize(280,330);
+                        } else {
+                            map.infoWindow.resize(300,350);
+                        }
+                        template = new InfoTemplate();
+                        template.setTitle("<b>${" + precinctIdentifier + "}</b>");
+                        template.setContent(getPopupText);
+                        popup = map.infoWindow;
+                        popup.highlight = true;
+                        popup.titleInBody = false;
+                        popup.domNode.className += " light";
+                    }
+                    
+                    // whenever the map updates then show the loading indicator
+                    function mapUpdatesAreBeginning() {
+                        esri.hide(overlaidControls);
+                        esri.hide(mainNavbar);
+                        esri.show(loading);
+                        map.disableMapNavigation();
+                        map.hideZoomSlider();
+                    }
+                    
+                    // whenever the map finishes updating then hide the loading indicator
+                    function mapUpdatesAreEnding(error) {
+                        // after the initial add to the map we need to redraw the feature layer...
+                        if (featureLayerNeedsUpdateAfterAddingToMap) {
+                            featureLayerNeedsUpdateAfterAddingToMap = false;
+                            setNewRaceTotalsInfo(REGISTRATION_TURNOUT);
+                            fillPolygonsForRace(REGISTRATION_TURNOUT);
+                            featureLayer.redraw();
+                        }
+                        hideLoadingIndicatorAndShowOverlays();
+                    }
+                    
+                    function hideLoadingIndicatorAndShowOverlays() {
+                        esri.hide(loading);
+                        esri.show(mainNavbar);
+                        esri.show(overlaidControls);
+                        if (overallResultsShouldShow) {
+                            esri.show(overallResultsPanelWrapper);
+                        } else {
+                            esri.hide(overallResultsPanelWrapper);
+                        }
+                        //overlaidControls.classList.remove("hidden");
+                        // for older OS Compatibility
+                        overlaidControls.className = "";
+                    
+                        //mainNavbar.classList.remove("hidden");
+                        // for older OS Compatibility
+                        mainNavbar.className = "navbar navbar-dark navbar-fixed-top";
+                        map.enableMapNavigation();
+                        map.showZoomSlider();
+                    }
+                    
+                    // the first time the precincts feature layer loads then set
+                    // an extent for the map, and signal the feature layer needs redraw
+                    function precinctsLayerWasLoaded(e) {
+                        featureLayerNeedsUpdateAfterAddingToMap = true;
+                        map.setExtent(featureLayer.fullExtent);
+                    }
+                    
+                    function removeOverallResults() {
+                        overallResultsShouldShow = false;
+                        esri.hide(overallResultsPanelWrapper);
+                        showHideButton.innerHTML = "<span class='glyphicon glyphicon-plus-sign'></span>&nbsp;&nbsp;Show overall results";
+                    }
+                    
+                    function showOverallResults() {
+                        overallResultsShouldShow = true;
+                        esri.show(overallResultsPanelWrapper);
+                        showHideButton.innerHTML = "<span class='glyphicon glyphicon-minus-sign'></span>&nbsp;&nbsp;Hide overall results";
+                    }
+                    
+                    function toggleOverallResultsShowing() {
+                        if (overallResultsShouldShow) {
+                            removeOverallResults();
+                        } else {
+                            showOverallResults();
+                        }
+                    }
+                    
+                    function reloadSelf() {
+                        window.location.reload(true);
+                    }
+                    
+                    function changeRace() {
+                        map.infoWindow.hide();
+                        var raceId = raceSelector.options[raceSelector.selectedIndex].value;
+                        // delay reloading slightly so that browsers like IE11 have time to catch up
+                        // with button refresh...
+                        esri.show(loading);
+                        setTimeout(function(){ doReloadRace(raceId); }, 100);
+                    }
+                    
+                    function doReloadRace(raceId) {
+                        mapUpdatesAreBeginning();
+                        // populate new overall values
+                        setNewRaceTotalsInfo(raceId);
+                        // redraw the polygons
+                        fillPolygonsForRace(raceId);
+                        featureLayer.redraw();
+                        map.setExtent(getExtentForRace(raceId));
+                        mapUpdatesAreEnding();
+                        showOverallResults();
+                    }
+                    
+                    function getExtentForRace(raceId) {
+                        if (raceId == REGISTRATION_TURNOUT) {
+                            return featureLayer.fullExtent;
+                        } else {
+                            var raceInfo = races[raceId];
+                            if (raceInfo) {
+                                var precincts = raceInfo["precincts"];
+                                var keys = getArrayFromDictionary(precincts);
+                                // loop through and add extents for all precincts in this race
+                                var graphicsArray = [];
+                                for (key in keys) {
+                                    var featureForPrecinct = getFeatureForPrecinct(keys[key]);
+                                    graphicsArray.push(featureForPrecinct);
+                                }
+                                var e = graphicsUtils.graphicsExtent(graphicsArray);
+                                return e;
+                            } else {
+                                return map.extent;
+                            }
+                        }
+                    }
+                    
+                    function getFeatureForPrecinct(precinctID) {
+                        for (var i = 0; i < featureLayer.graphics.length; i++) {
+                            var currFeature = featureLayer.graphics[i];
+                            var precintNameOnMap = currFeature.attributes[precinctIdentifier];
+                            if (precintNameOnMap == precinctID) {
+                                return currFeature;
+                            }
+                        }
+                        return null;
+                    }
+                    
+                    function fillPolygonsForRace(raceId) {
+                        if (raceId != REGISTRATION_TURNOUT && !races[raceId]) {
+                            showErrorModal("No data found for this race");
+                        } else {
+                            for (var i = 0; i < featureLayer.graphics.length; i++) {
+                                var currFeature = featureLayer.graphics[i];
+                                var precintNameOnMap = currFeature.attributes[precinctIdentifier];
+                                var featureSymbol = precinctFillAndOutlineSymbolWithColor(new Color([0, 0, 0, 0.0]));
+                                if (raceId == REGISTRATION_TURNOUT) {
+                                    var precinctData = registrationAndTurnout[precintNameOnMap];
+                                    var precinctColor = precinctData["color"];
+                                    featureSymbol.setColor(colorWithHalfAlpha(precinctColor));
+                                } else {
+                                    var raceInfo = races[raceId];
+                                    if (raceInfo) {
+                                        var precincts = raceInfo["precincts"];
+                                        var precinctData = precincts[precintNameOnMap];
+                                        var regTurnoutPrecinctData = registrationAndTurnout[precintNameOnMap];
+                                        if (precinctData) {
+                                            var precinctColor = notReportedColor; // default color
+                                            if (!precinctData["noVotesCounted"] && !(regTurnoutPrecinctData["category"] == "Not Reported")) {
+                                                if (precinctData["voteByMail"]) {
+                                                    precinctColor = vbmColor;
+                                                } else if (precinctData["tiedVote"]) {
+                                                    precinctColor = tiedVoteColor;
+                                                } else {
+                                                    precinctColor = precinctData["winningCandColor"];
+                                                }
+                                            }
+                                            featureSymbol.setColor(colorWithHalfAlpha(precinctColor));
+                                        } else {
+                                            featureSymbol.setColor(new Color([0, 0, 0, 0.0]));
+                                        }
+                                    } else {
+                                        featureSymbol.setColor(new Color([0, 0, 0, 0.0]));
+                                    }
+                                }
+                                currFeature.setSymbol(featureSymbol);
+                            }
+                        }
+                    }
+                    
+                    function colorWithHalfAlpha(hexValue) {
+                        color = Color.fromHex(hexValue);
+                        color.a = 0.5;
+                        return color;
+                    }
+                    
+                    // DATA FORMATTING FUNCTIONS
+                    
+                    function convertHex(hex,opacity){
+                        hex = hex.replace("#","");
+                        r = parseInt(hex.substring(0,2), 16);
+                        g = parseInt(hex.substring(2,4), 16);
+                        b = parseInt(hex.substring(4,6), 16);
+                        result = "rgba(" + r + "," + g + "," + b + "," + opacity + ")";
+                        return result;
+                    }
+                    
+                    function setNewRaceTotalsInfo(raceId) {
+                        if (raceId == REGISTRATION_TURNOUT) {
+                            percentageRequiredToPassLine.innerHTML = "";
+                            //percentageRequiredToPassLine.classList.add("hidden");
+                            // for older OS Compatibility
+                            percentageRequiredToPassLine.className = "hidden";
+                            raceNameLine.innerHTML = "<b>" + raceId + "</b>";
+                            var pctToTwoDecimals = 0.00;
+                            if (totalPrecinctCount > 0) {
+                                pctToTwoDecimals = Math.round(((totalReportedPrecincts / totalPrecinctCount) * 100) * 100) / 100;
+                            }
+                            precinctsReportedLine.innerHTML = "Precincts Reported: " + totalReportedPrecincts + " of " + totalPrecinctCount +  " (" + pctToTwoDecimals + "%)";
+                            if (totalReportedPrecincts > 0) {
+                                var plural = "";
+                                if (totalVBMPrecincts > 1) {
+                                    plural = "s";
+                                }
+                                if (totalVBMPrecincts > 0) {
+                                    precinctsReportedLine.innerHTML = precinctsReportedLine.innerHTML + "<br><i>(includes " + totalVBMPrecincts + " Mandatory Vote by Mail Precinct" + plural + ")</i>";
+                                }
+                            }
+                            overallResultsTable.innerHTML = "<tr><td align='left'><img src='' class='img-candidate-swatch' style='background-color:" + convertHex(reportedColor,0.5)  + ";'>&nbsp;Reported</td></tr>" +
+                            "<tr><td align='left'><img src='' class='img-candidate-swatch' style='background-color:" + convertHex(notReportedColor,0.5) + ";'>&nbsp;Not Reported</td></tr>" +
+                            "<tr><td align='left'><img src='' class='img-candidate-swatch' style='background-color:" + convertHex(vbmColor,0.5) + ";'>&nbsp;Mandatory Vote by Mail</td></tr>" +
+                            "<tr><td align='left'><img src='' class='img-candidate-swatch' style='background-color:white'>&nbsp;Not In This Race</td></tr>";
+                        } else {
+                            raceNameObject = races[raceId];
+                            raceNameLine.innerHTML = "<b>" + raceNameObject["description"] + "</b>";
+                            var totalRptdPrecincts = getTotalReportedPrecinctsForRace(raceId);
+                            var totalVBMPrecinctsForRace = getTotalReportedVBMForRace(raceId);
+                            var totalPrecincts = getTotalPrecinctsForRace(raceId);
+                            var pctToTwoDecimals = 0.00;
+                            if (totalPrecincts > 0) {
+                                var pctToTwoDecimals = Math.round(((totalRptdPrecincts / totalPrecincts) * 100) * 100) / 100;
+                            }
+                            precinctsReportedLine.innerHTML = "Precincts Reported: " + totalRptdPrecincts + " of " + totalPrecincts + " (" + pctToTwoDecimals + "%)";
+                            if (totalRptdPrecincts > 0) {
+                                var plural = "";
+                                if (totalVBMPrecinctsForRace > 1) {
+                                    plural = "s";
+                                }
+                                if (totalVBMPrecinctsForRace > 0) {
+                                    precinctsReportedLine.innerHTML = precinctsReportedLine.innerHTML + "<br><i>(includes " + totalVBMPrecinctsForRace + " Mandatory Vote by Mail Precinct" + plural + ")</i>";
+                                }
+                            }
+                            if (yesNoVoteRace(raceId)) {
+                                percentageRequiredToPassLine.innerHTML = "<font style='color:red;'>" + raceNameObject["percentagePassDisplayMessage"] + "</font>";
+                                //percentageRequiredToPassLine.classList.remove("hidden");
+                                // for older OS Compatibility
+                                percentageRequiredToPassLine.className = "";
+                            } else {
+                                percentageRequiredToPassLine.innerHTML = "";
+                                //percentageRequiredToPassLine.classList.add("hidden");
+                                // for older OS Compatibility
+                                percentageRequiredToPassLine.className = "hidden";
+                            }
+                            var overallList = raceSummaryCandidateListInDisplayOrder(raceId);
+                            overallResultsTable.innerHTML = raceCandidatesText(overallList,true,raceId);
+                        }
+                    }
+                    
+                    function raceCandidatesText(sortedCandidatesList,innerContentOnly,raceId) {
+                        var rowText = "";
+                        for (k in sortedCandidatesList) {
+                            var currCand = sortedCandidatesList[k];
+                            rowText += "<tr><td align='left'><img src='' class='img-candidate-swatch' style='background-color:" + convertHex(currCand["color"],0.5) + ";'>&nbsp;<small>" + currCand["name"] + "</small></td><td style='text-align:right;'><b>" + currCand["votes"] + "</b>&nbsp;<small>(" + currCand["percentageVotes"] + "%)</small></td></tr>";
+                        }
+                        var appendedText = "<tr><td align='left'><img src='' class='img-candidate-swatch' style='background-color:" + convertHex(notReportedColor,0.5) + ";'>&nbsp;<small>" + "Not Reported" + "</small></td><td style='text-align:right;'></td></tr>";
+                        appendedText += "<tr><td align='left'><img src='' class='img-candidate-swatch' style='background-color:" + convertHex(vbmColor,0.5) + ";'>&nbsp;<small>" + "Mandatory Vote by Mail" + "</small></td><td style='text-align:right;'></td></tr>";
+                        appendedText += "<tr><td align='left'><img src='' class='img-candidate-swatch' style='background-color:" + convertHex(tiedVoteColor,0.5) + ";'>&nbsp;<small>" + "Vote Tied" + "</small></td><td style='text-align:right;'></td></tr>";
+                        if (rowText.length > 0) {
+                            var candHeader = "Candidate";
+                            if (yesNoVoteRace(raceId)) {
+                                candHeader = "";
+                            }
+                            retText = "<tr><th>" + candHeader + "</th><th style='text-align:right;'>Votes</th></tr>" + rowText + appendedText;
+                            if (innerContentOnly) {
+                                return retText;
+                            } else {
+                                return "<table class='table'>" + retText + "</table>";
+                            }
+                        } else {
+                            return "";
+                        }
+                    }
+                    
+                    function raceSummaryCandidateListInDisplayOrder(raceId) {
+                        var raceInfo = races[raceId];
+                        if (raceInfo) {
+                            var cands = raceInfo["overallResults"];
+                            var totalCandidateVotes = totalVotes(cands);
+                            var candsByVoteAndOrder = {};
+                            for (k in cands) {
+                                if (cands.hasOwnProperty(k)) {
+                                    var currObj = cands[k];
+                                    currObj["name"] = getCandidateName(k);
+                                    currObj["candidateKey"] = k;
+                                    currObj["percentageVotes"] = 0.00;
+                                    if (totalCandidateVotes > 0) {
+                                        currObj["percentageVotes"] = Math.round(((currObj["votes"] * 100.0000) / totalCandidateVotes) * 100) / 100;
+                                    }
+                                    var newKey = currObj["votes"] * 1000000 + (999999 - currObj["order"]);
+                                    candsByVoteAndOrder[newKey] = currObj;
+                                }
+                            }
+                            var keys = getArrayFromDictionary(candsByVoteAndOrder);
+                            keys.sort(function(a, b){return b-a});
+                            var sortedCandidates = [];
+                            for (k in keys) {
+                                sortedCandidates.push(candsByVoteAndOrder[keys[k]]);
+                            }
+                            return sortedCandidates;
+                        } else {
+                            showErrorModal("An error occurred loaing race information");
+                            return [];
+                        }
+                    }
+                    
+                    function raceCandidateListInDisplayOrder(precinctData) {
+                        var cands = precinctData["candidates"];
+                        var totalCandidateVotes = totalVotes(precinctData["candidates"]);
+                        var candsByVoteAndOrder = {};
+                        for (k in cands) {
+                            if (cands.hasOwnProperty(k)) {
+                                var currObj = cands[k];
+                                currObj["name"] = getCandidateName(k);
+                                currObj["candidateKey"] = k;
+                                currObj["percentageVotes"] = 0.00;
+                                if (totalCandidateVotes > 0) {
+                                    currObj["percentageVotes"] = Math.round(((currObj["votes"] * 100.0000) / totalCandidateVotes) * 100) / 100;
+                                }
+                                var newKey = currObj["votes"] * 1000000 + (999999 - currObj["order"]);
+                                candsByVoteAndOrder[newKey] = currObj;
+                            }
+                        }
+                        var keys = getArrayFromDictionary(candsByVoteAndOrder);
+                        keys.sort(function(a, b){return b-a});
+                        var sortedCandidates = [];
+                        for (k in keys) {
+                            sortedCandidates.push(candsByVoteAndOrder[keys[k]]);
+                        }
+                        return sortedCandidates;
+                    }
+                    
+                    function totalVotes(cands) {
+                        if (cands) {
+                            var totalVotes = 0;
+                            for (candNum in cands) {
+                                currCand = cands[candNum];
+                                var v = currCand["votes"];
+                                if (v) {
+                                    totalVotes += v;
+                                }
+                            }
+                            return totalVotes;
+                        } else {
+                            return 0;
+                        }
+                    }
+                    
+                    function yesNoVoteRace(raceId) {
+                        var raceNameInfo = races[raceId];
+                        if (raceNameInfo["percentageNeededToPass"] > 0) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                    
+                    function getTotalReportedPrecinctsForRace(raceId) {
+                        var totalRptd = 0;
+                        var raceInfo = races[raceId];
+                        if (raceInfo) {
+                            var precincts = raceInfo["precincts"];
+                            if (precincts) {
+                                for (currPrecinct in precincts) {
+                                    var precinctData = precincts[currPrecinct];
+                                    var regTurnoutPrecinctData = registrationAndTurnout[currPrecinct];
+                                    var thisPrecinctShouldBeCounted = true;
+                                    if (precinctData["notReported"] || precinctData["noVotesCounted"] || regTurnoutPrecinctData["category"] == "Not Reported") {
+                                        thisPrecinctShouldBeCounted = false;
+                                    }
+                                    if ((overallTotalVotes == 0) && precinctData["voteByMail"]) {
+                                        thisPrecinctShouldBeCounted = false;
+                                    }
+                                    if (thisPrecinctShouldBeCounted) {
+                                        totalRptd++;
+                                    }
+                                }
+                                return totalRptd;
+                            } else {
+                                return 0;
+                            }
+                        } else {
+                            return 0;
+                        }
+                    }
+                    
+                    function getTotalReportedVBMForRace(raceId) {
+                        var totalVBM = 0;
+                        var raceInfo = races[raceId];
+                        if (raceInfo) {
+                            var precincts = raceInfo["precincts"];
+                            if (precincts) {
+                                for (currPrecinct in precincts) {
+                                    var precinctData = precincts[currPrecinct];
+                                    if ((overallTotalVotes > 0) && precinctData["voteByMail"]) {
+                                        totalVBM++;
+                                    }
+                                }
+                                return totalVBM;
+                            } else {
+                                return 0;
+                            }
+                        } else {
+                            return 0;
+                        }
+                    }
+                    
+                    function getTotalPrecinctsForRace(raceId) {
+                        var raceInfo = races[raceId];
+                        if (raceInfo) {
+                            var precincts = raceInfo["precincts"];
+                            if (precincts) {
+                                return Object.keys(precincts).length;
+                            } else {
+                                return 0;
+                            }
+                        } else {
+                            return 0;
+                        }
+                    }
+                    
+                    function getPopupText(graphic) {
+                    
+                        var raceId = raceSelector.options[raceSelector.selectedIndex].value;
+                        var paragraphSection = "";
+                    
+                        if (raceId == REGISTRATION_TURNOUT) {
+                            var precinctData = registrationAndTurnout[graphic.attributes.Precinct_ID];
+                            var overallTitle = consolidatedPrecinctText(graphic.attributes.Precinct_ID);
+                            var pctRpt = precinctData["percentReported"];
+                            if (pctRpt == -1) {
+                                // vote by mail
+                                paragraphSection = voteByMailText(REGISTRATION_TURNOUT,graphic.attributes.Precinct_ID);
+                            } else {
+                                var reportedPct = "Not In This Race";
+                                if (pctRpt == 100) {
+                                    // Reported
+                                    reportedPct = "<img src='' class='img-candidate-swatch' style='background-color:" + convertHex(precinctData["color"],0.5) + ";'>&nbsp;" + precinctData["category"] + " - 100%";
+                                } else {
+                                    // Not reported or not in this race
+                                    reportedPct = "<img src='' class='img-candidate-swatch' style='background-color:" + convertHex(precinctData["color"],0.5) + ";'>&nbsp;" + precinctData["category"];
+                                }
+                                paragraphSection = raceNameParagraphText(REGISTRATION_TURNOUT) + overallTitle + "<p align='left' style='padding-left:0px;'><B>" + reportedPct + "</b></p>" + lastUpdatedText();
+                            }
+                        } else {
+                            var raceInfo = races[raceId];
+                            if (raceInfo) {
+                                var raceName = races[raceId];
+                                var precincts = raceInfo["precincts"];
+                                var precinctData = precincts[graphic.attributes.Precinct_ID];
+                                if (precinctData) {
+                    
+                                    // note - must also factor in not reported for each race?...
+                    
+                                    if (precinctData["voteByMail"]) {
+                                        paragraphSection = voteByMailText("Race: " + raceName["description"],graphic.attributes.Precinct_ID);
+                                    } else if (precinctData["tiedVote"]) {
+                                        paragraphSection = tiedVoteText("Race: " + raceName["description"],graphic.attributes.Precinct_ID,precinctData,raceId);
+                                    } else {
+                                        var x = raceCandidateListInDisplayOrder(precinctData);
+                                        var cands = precinctData["candidates"];
+                                        var sortedCandidatesList = raceCandidateListInDisplayOrder(precinctData);
+                                        paragraphSection = raceNameParagraphText(raceName["description"]) + consolidatedPrecinctText(graphic.attributes.Precinct_ID) + totalVotesCastText(precinctData) + requiredVotesToPassText(raceId) + raceCandidatesText(sortedCandidatesList,false,raceId) + lastUpdatedText();
+                                    }
+                                } else {
+                                    paragraphSection = "<p align='left' style='padding-left:0px;'>This precinct is not included in this race.</p>";
+                                }
+                            } else {
+                                paragraphSection = "<p align='left' style='padding-left:0px;'>This precinct is not included in this race.</p>";
+                            }
+                        }
+                        return textWrappedInPanelDefinition(paragraphSection);
+                    }
+                    
+                    function consolidatedPrecinctText(precinctID) {
+                        var homePrecinctsList = getHomePrecinctsList(precinctID);
+                        if (numberOfPrecincts(precinctID) > 1) {
+                            return "<p align='left' style='padding-left:0px;'>Consolidated precinct " + precinctID + " includes precincts " + homePrecinctsList + "</p>";
+                        }
+                        else {
+                            return "<p align='left' style='padding-left:0px;'>Consolidated precinct " + precinctID + " includes precinct " + homePrecinctsList+ "</p>";
+                        }
+                    }
+                    
+                    function getHomePrecinctsList(precinctID) {
+                        var precinctData = registrationAndTurnout[precinctID];
+                        var homePrecincts = precinctData["homePrecincts"];
+                        var homePrecinctsList = "";
+                        for (p in homePrecincts) {
+                            if (p > 0) {
+                                homePrecinctsList = homePrecinctsList + ", ";
+                            }
+                            homePrecinctsList = homePrecinctsList + homePrecincts[p];
+                        }
+                        return homePrecinctsList;
+                    }
+                    
+                    function numberOfPrecincts(precinctID) {
+                        var precinctData = registrationAndTurnout[precinctID];
+                        var homePrecincts = precinctData["homePrecincts"];
+                        return homePrecincts.length;
+                    }
+                    
+                    function voteByMailText(raceNameText,precinctID) {
+                        var homePrecinctsList = getHomePrecinctsList(precinctID);
+                        var overallTitle = consolidatedPrecinctText(precinctID);
+                        var reportedPct = "<img src='' class='img-candidate-swatch' style='background-color:" + convertHex(vbmColor,0.5) + ";'>&nbsp;" + vbmMessage;
+                        paragraphSection = raceNameParagraphText(raceNameText) + overallTitle + "<p align='left' style='padding-left:0px;'><B>" + reportedPct + "</b></p>";
+                        var consolPrecinctsMsg = "Consolidated precinct " + homePrecinctsList + " contains less than 250 votes";
+                        if (numberOfPrecincts(precinctID) > 1) {
+                            consolPrecinctsMsg = "Consolidated precincts " + homePrecinctsList + " contain less than 250 votes";
+                        }
+                        disclaimerSection = "<ul><li>" + consolPrecinctsMsg + "</li><li>All ballots are cast by mail.</li><li>Results for this precinct to be counted after election night.</li></ul>" + lastUpdatedText();
+                        return paragraphSection + disclaimerSection;
+                    }
+                    
+                    function tiedVoteText(raceNameText,precinctID,precinctData,raceId) {
+                        var homePrecinctsList = getHomePrecinctsList(precinctID);
+                        var overallTitle = consolidatedPrecinctText(precinctID);
+                        var sortedCandidatesList = raceCandidateListInDisplayOrder(precinctData);
+                        return raceNameParagraphText(raceNameText) + overallTitle + tiedVoteTextLine(precinctData) + totalVotesCastText(precinctData) + raceCandidatesText(sortedCandidatesList,false,raceId) + lastUpdatedText();
+                    }
+                    
+                    function totalVotesCastText(precinctData) {
+                        return "<p align='left' style='padding-left:0px;'><b>Total votes cast: " + totalVotes(precinctData["candidates"]) + "</b></p>";
+                    }
+                    
+                    function tiedVoteTextLine(precinctData) {
+                        var tiedMsg = "<img src='' class='img-candidate-swatch' style='background-color:" + convertHex(tiedVoteColor,0.5) + ";'>&nbsp;<font color='DarkRed'>" + tiedVoteMsg + "</font>";
+                        return "<p align='left' style='padding-left:0px;'><B>" + tiedMsg + "</b></p>";
+                    }
+                    
+                    function raceNameParagraphText(raceNameText) {
+                        return "<p align='left' style='padding-left:0px; border-top:0 none;'><b>" + raceNameText + "</b></p>";
+                    }
+                    
+                    function lastUpdatedText() {
+                        return "<p align='right'><i>last updated " + lastUpdated + "</i></p>";
+                    }
+                    
+                    function requiredVotesToPassText(raceId) {
+                        if (yesNoVoteRace(raceId)) {
+                            var raceNameInfo = races[raceId];
+                            var msg = raceNameInfo["percentagePassDisplayMessage"];
+                            return "<p align='left' style='padding-left:0px;'><b><font color='red'>" + raceNameInfo["percentagePassDisplayMessage"] + "</font></b></p>";
+                        } else {
+                            return "";
+                        }
+                    }
+                    
+                    function textWrappedInPanelDefinition(innerText) {
+                        var part1 = "<div class='panel panel-default pull-left' style='padding-top:0px; padding-bottom:0px; border:none; box-shadow:none;'><div class='panel-body pull-left' style='width:auto; padding-left:0px; padding-top:0px; padding-bottom:0px; border:none; box-shadow:none; border-top:0 none;'>";
+                        var part2 = "</div></div>";
+                        return part1 + innerText + part2;
+                    }
+                    
+                    // DATA LOAD FUNCTIONS
+                    
+                    function loadResults() {
+                    
+                        // event listener for load error button
+                        on(retryLoadButton, "click", reloadSelf);
+                    
+                        $.ajax({
+                           url: "/json/electionResults.json",
+                           type: "GET",
+                           cache: false,
+                           dataType: "json",
+                           success: function( data,status, xhr ) {
+                               
+                               if (data) {
+                                savedLastFileUpdateTimestamp = xhr.getResponseHeader("Last-Modified");
+                                baseMapName = data["baseMapName"];
+                                electionName = data["electionName"];
+                                electionTitleLabel.innerText = electionName;
+                                initialZoom = data["initialZoom"];
+                                mapCenterLatLong = data["mapCenterLatLong"];
+                                precinctIdentifier = data["precinctIdentifier"];
+                                cityIdentifier = data["cityIdentifier"];
+                                precinctsFeatureLayerURL = data["precinctsFeatureLayerURL"];
+                                citiesFeatureLayerURL = data["citiesFeatureLayerURL"];
+                                countyBoundaryFeatureLayerURL = data["countyBoundaryFeatureLayerURL"];
+                                minScaleForLabelsToShow = data["minScaleForLabelsToShow"];
+                                maxScaleForLabelsToShow = data["maxScaleForLabelsToShow"];
+                                minScaleForCityLabelsToShow = data["minScaleForCityLabelsToShow"];
+                                maxScaleForCityLabelsToShow = data["maxScaleForCityLabelsToShow"];
+                                lastUpdated = data["lastUpdatedDateTime"];
+                                lastUpdatedDateTime.innerHTML = "<i>last updated " + lastUpdated + "</i>";
+                                registrationAndTurnoutCategories = data["registrationAndTurnoutCategories"];
+                                var specialColors = data["specialColors"];
+                                vbmColor = specialColors["voteByMailColor"];
+                                tiedVoteColor = specialColors["tiedVoteColor"];
+                                notReportedColor = specialColors["notReportedColor"];
+                                reportedColor = specialColors["reportedColor"];
+                                races = data["races"];
+                                var race;
+                                for (race in races) {
+                                    var optionToAdd = new Option(races[race]["description"],race);
+                                    raceSelector.add(optionToAdd);
+                                }
+                                candidates = data["candidates"];
+                                registrationAndTurnout = data["registrationAndTurnout"];
+                                createRaceTotals();
+                                loadBaseMap();
+                               } else {
+                                loadError();
+                               }
+                           
+                           },
+                           error: function() {
+                               loadError();
+                           }
+                        });
+                    
+                    }
+                    
+                    function checkLastUpdateTimestamp() {
+                        $.ajax({
+                           type: "HEAD",
+                           cache: false,
+                           url: "/json/electionResults.json",
+                           complete: function(xhr) {
+                               lastFileUpdateTimestamp = xhr.getResponseHeader("Last-Modified");
+                               if (savedLastFileUpdateTimestamp != lastFileUpdateTimestamp) {
+                                    // get new results
+                                    reloadSelf();
+                               }
+                           }
+                        });
+                    }
+                    
+                    function createRaceTotals() {
+                    
+                        // calculate overall race totals, and add overall results to race dictionary
+                        // note that total votes here are drawn from the candidate table, instead of
+                        // the overall tally.
+                        overallTotalVotes = 0;
+                        for (currRace in races) {
+                            var raceInfo = races[currRace];
+                            var overallResults = {};
+                            var precincts = raceInfo["precincts"];
+                            for (precinctID in precincts) {
+                                var currPrecinct = precincts[precinctID];
+                                if (currPrecinct) {
+                                    var candList = currPrecinct["candidates"];
+                                    for (currCan in candList) {
+                                        var currCanObject = candList[currCan];
+                                        var candidateFromCanTable = candidates[currCan];
+                                        var newCanEntry = overallResults[currCan];
+                                        if (newCanEntry) {
+                                            // adding to an existing candidate for race
+                                            //newCanEntry["votes"] += votesOrZero(currCanObject["votes"]);
+                                        } else {
+                                            // first time seeing this candidate
+                                            newCanEntry = {};
+                                            newCanEntry["name"] = getCandidateName(currCan);
+                                            //newCanEntry["votes"] = votesOrZero(currCanObject["votes"]);
+                                            newCanEntry["votes"] = Number(candidateFromCanTable["CAN_VOTES"]);
+                                            overallTotalVotes = overallTotalVotes + newCanEntry["votes"];
+                                            newCanEntry["color"] = currCanObject["color"];
+                                            newCanEntry["order"] = currCanObject["order"];
+                                            overallResults[currCan] = newCanEntry;
+                                        }
+                                    }
+                                }
+                            }
+                            raceInfo["overallResults"] = overallResults;
+                        }
+                    
+                        // calculate total reported precincts
+                        for (precinctID in registrationAndTurnout) {
+                            var currPrecinct = registrationAndTurnout[precinctID];
+                            if (currPrecinct) {
+                                // vbm precincts only count if we have at least one vote
+                                if (currPrecinct["percentReported"] == 100 || ((overallTotalVotes > 0) && currPrecinct["category"]  == "Vote by Mail Precinct")) {
+                                    totalReportedPrecincts++;
+                                }
+                                if ((overallTotalVotes > 0) && currPrecinct["category"]  == "Vote by Mail Precinct") {
+                                    totalVBMPrecincts++;
+                                }
+                                totalPrecinctCount++;
+                            }
+                        }
+                    }
+                    
+                    function votesOrZero(votes) {
+                        // ignore -1 for vbm when counting votes
+                        if (votes < 0) {
+                            return 0
+                        } else {
+                            return votes;
+                        }
+                    }
+                    
+                    function getCandidateName(candNum) {
+                        var cand = candidates[candNum];
+                        return cand["name"];
+                    }
+                    
+                    function loadError() {
+                        esri.hide(loadingImg);
+                        showErrorModal("An error occurred loading election data.");
+                    }
+                    
+                    function showErrorModal(message) {
+                        errorMessage.innerHTML = message;
+                        $('#errorModal').modal({ show: false});
+                        $('#errorModal').modal('show');
+                    }
+                    
+                    // UTILITY FUNCTIONS
+                    function getArrayFromDictionary(d) {
+                        var keys = [];
+                        for (var key in d) {
+                            if (d.hasOwnProperty(key)) {
+                                keys.push(key);
+                            }
+                        }
+                        return keys;
+                    }
+                    
+                });
+        </script>
+        
+        
+        
+        <!-- jQuery (for Bootstrap's JavaScript plugins) -->
+        <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+        <!-- Include all  plugins or individual files as needed -->
+        <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+        
+    </body>
+</html>
