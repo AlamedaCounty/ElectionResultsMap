@@ -1,0 +1,523 @@
+/*** Election Results styles ***/
+html, body {
+    height: 100%;
+    min-height: 100%;
+}
+
+a:link, a:visited {
+//background-color: #003267;
+    color: blue;
+    padding: 3px 8px;
+    text-align: center;
+    text-decoration: underline;
+    display: inline-block;
+}
+
+
+a:hover, a:active {
+//background-color: #749DAB;
+    color: cornflowerblue;
+    text-decoration: underline;
+}
+
+#navPreload {
+    position:absolute;
+    padding:0px;
+    top:0px;
+    left:0px;
+    right:0px;
+    height:95px;
+    background:#283239; //#003267;
+}
+
+#mapDiv {
+    position:absolute;
+    height:auto;
+    bottom:0;
+    top:95px;
+    left:0;
+    right:0;
+}
+
+#loadingImg {
+    position:absolute;
+    left:50%;
+    top:50%;
+    margin-left: -16px;
+    margin-top: -16px;
+    z-index:100;
+}
+
+/*.navbar-dark {
+    background-color: #003267;
+    border-color: #003267;
+    color: #ffffff;
+} */
+
+.navbar-brand {
+    position:absolute;
+    margin-top:-1px;
+    margin-right:0px;
+    left: 20px;
+}
+
+.navbar-logo {
+    position:absolute;
+    margin-top:-10px;
+    margin-right:0px;
+    right: 50px;
+    width:209px; /*width of your image*/
+    height:55px; /*height of your image*/
+    background-image: url("/BocoElections2016/images/logo.png");
+}
+
+.fbshare {
+    width:18px;
+    height:18px;
+    position:absolute;
+    margin-top:33px;
+    margin-right:0px;
+    right: 340px;
+    background-image: url("/BocoElections2016/images/facebook.png");
+}
+
+.fbshare:hover {
+    background-image: url("/BocoElections2016/images/facebookWhite.png");
+}
+
+.fbshare:hover:after {
+    content: "Share on Facebook";
+    display: block;
+    position: relative;
+    top: 20px;
+    right: -2px;
+    width: 135px;
+    color: black;
+    background-color: lightgray;
+    border-radius: 5px;
+}
+
+.twittershare {
+    width:20px;
+    height:20px;
+    position:absolute;
+    margin-top:33px;
+    margin-right:0px;
+    right: 310px;
+    background-image: url("/BocoElections2016/images/twitter.png");
+}
+
+.twittershare:hover {
+    background-image: url("/BocoElections2016/images/twitterWhite.png");
+}
+
+.twittershare:hover:after {
+    content: "Share on Twitter";
+    display: block;
+    position: relative;
+    top: 20px;
+    right: -2px;
+    width: 120px;
+    color: black;
+    background-color: lightgray;
+    border-radius: 5px;
+}
+
+.HeaderTitle {
+    position:absolute;
+    color:white;
+    margin-top:-1px;
+    margin-left:0px;
+    top:40px;
+    left: 270px;
+    display: block;
+}
+
+span.glyphicon-cog {
+    font-size: 1.7em;
+}
+
+.buttonCog {
+    top: 5px;
+    right: 0px;
+    position: absolute;
+    background:none;
+    box-shadow:none;
+    color:white;
+    outline: 0 none;
+    border: 0 none;
+}
+
+.buttonCog:hover {
+    background: none;
+    color:gray;
+    box-shadow:none;
+    outline: 0;
+    border: 0 none;
+}
+
+.buttonCog:focus {
+    background: none;
+    color:white;
+    box-shadow:none;
+    outline: 0;
+    border: 0 none;
+}
+
+.buttonRemove {
+    padding-top:10px;
+    padding-right:10px;
+    top:0px;
+    right:0px;
+    background:none;
+    box-shadow:none;
+    color:gray;
+    outline:0 none;
+    border:0 none;
+}
+
+.buttonRemove:hover {
+    background: none;
+    color:black;
+    box-shadow:none;
+    outline: 0;
+    border: 0 none;
+}
+
+.buttonRemove:focus {
+    background: none;
+    color:gray;
+    box-shadow:none;
+    outline: 0;
+    border: 0 none;
+}
+
+.label {
+    display: inline-block;
+    max-width: 600px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.label-primary {
+    background:#003267;
+    top: 100px;
+    left: 15px;
+    position: absolute;
+}
+
+#raceSelectorWrapper {
+    top: 135px;
+    left: 0px;
+    position: absolute;
+}
+
+#overallResultsPanelWrapper {
+    top: 175px;
+    left: 15px;
+    position: absolute;
+}
+
+.panel-primary {
+    height:none;
+    padding-bottom:0px;
+    padding-right:0px;
+    margin-left:0px;
+    margin-right:0px;
+    max-width:500px;
+    max-height:360px;
+    overflow-y: auto;
+    z-index:100;
+}
+
+.panel-body {
+    width:360px;
+    padding-bottom:10px;
+    padding-right:0px;
+    margin-left:0px;
+    margin-right:20px;
+}
+
+.panel-heading-hidden {
+    padding-top:0px;
+    padding-right:0px;
+    padding-left:0px;
+    padding-bottom:0px;
+    max-height:0px;
+    height:0px;
+    border:0 none;
+    background:none;
+}
+
+.img-candidate-swatch
+{
+    height:20px;
+    width: 20px;
+    background-color: #ffffff;
+}
+
+/*** iPhone4 ***/
+@media only screen
+and (min-device-width : 320px) {
+
+    .label {
+        max-width: 290px;
+    }
+
+    .panel-primary {
+        height:130px;
+        max-width:290px;
+        max-height:130px;
+    }
+
+    .panel-body {
+        width:270px;
+    }
+
+    .HeaderTitle {
+        display: none;
+    }
+
+
+    .fbshare {
+        width:18px;
+        height:18px;
+        position:absolute;
+        margin-top:33px;
+        margin-right:0px;
+        right: 50px;
+        background-image: url("/BocoElections2016/images/facebook.png");
+    }
+
+    .twittershare {
+        width:20px;
+        height:20px;
+        position:absolute;
+        margin-top:33px;
+        margin-right:0px;
+        right: 15px;
+        background-image: url("/BocoElections2016/images/twitter.png");
+    }
+
+    .navbar-logo {
+        display: none;
+    }
+}
+
+/*** iPhone5 ***/
+@media only screen
+and (min-device-height : 568px) {
+
+    .label {
+        max-width: 290px;
+    }
+
+    .panel-primary {
+        height:220px;
+        max-width:290px;
+        max-height:220px;
+    }
+
+    .panel-body {
+        width:270px;
+    }
+
+    .HeaderTitle {
+        display: none;
+    }
+
+
+    .fbshare {
+        width:18px;
+        height:18px;
+        position:absolute;
+        margin-top:33px;
+        margin-right:0px;
+        right: 50px;
+        background-image: url("/BocoElections2016/images/facebook.png");
+    }
+
+    .twittershare {
+        width:20px;
+        height:20px;
+        position:absolute;
+        margin-top:33px;
+        margin-right:0px;
+        right: 15px;
+        background-image: url("/BocoElections2016/images/twitter.png");
+    }
+
+    .navbar-logo {
+        display: none;
+    }
+}
+
+/*** iPhone6 ***/
+@media only screen
+and (min-device-width : 375px) {
+
+    .label {
+        max-width: 345px;
+    }
+
+    .panel-primary {
+        height:320px;
+        max-width:500px;
+        max-height:320px;
+    }
+
+    .panel-body {
+        width:320px;
+    }
+
+    .HeaderTitle {
+        display: none;
+    }
+
+
+    .fbshare {
+        width:18px;
+        height:18px;
+        position:absolute;
+        margin-top:33px;
+        margin-right:0px;
+        right: 50px;
+        background-image: url("/BocoElections2016/images/facebook.png");
+    }
+
+    .twittershare {
+        width:20px;
+        height:20px;
+        position:absolute;
+        margin-top:33px;
+        margin-right:0px;
+        right: 15px;
+        background-image: url("/BocoElections2016/images/twitter.png");
+    }
+
+    .navbar-logo {
+        display: none;
+    }
+}
+
+/*** iPhone 6+ ***/
+@media only screen
+and (min-device-width : 414px) {
+
+    .label {
+        max-width: 360px;
+    }
+
+    .panel-primary {
+        height:none;
+        max-width:500px;
+        max-height:360px;
+    }
+
+    .panel-body {
+        width:320px;
+    }
+
+    .HeaderTitle {
+        display: none;
+    }
+
+    .fbshare {
+        width:18px;
+        height:18px;
+        position:absolute;
+        margin-top:33px;
+        margin-right:0px;
+        right: 50px;
+        background-image: url("/BocoElections2016/images/facebook.png");
+    }
+
+    .twittershare {
+        width:20px;
+        height:20px;
+        position:absolute;
+        margin-top:33px;
+        margin-right:0px;
+        right: 15px;
+        background-image: url("/BocoElections2016/images/twitter.png");
+    }
+
+    .navbar-logo {
+        display: none;
+    }
+
+}
+
+/*** other ***/
+@media only screen
+and (min-device-width : 415px) {
+
+    .label {
+        max-width: 1000px;
+    }
+
+    .panel-primary {
+        height:none;
+        max-width:500px;
+        max-height:360px;
+    }
+
+    .panel-body {
+        width:320px;
+    }
+
+    .HeaderTitle {
+        position:absolute;
+        color:white;
+        margin-top:-1px;
+        margin-left:0px;
+        top:40px;
+        left: 270px;
+        display: block;
+    }
+
+    .fbshare {
+        width:18px;
+        height:18px;
+        position:absolute;
+        margin-top:33px;
+        margin-right:0px;
+        right: 340px;
+        background-image: url("/BocoElections2016/images/facebook.png");
+    }
+
+    .twittershare {
+        width:20px;
+        height:20px;
+        position:absolute;
+        margin-top:33px;
+        margin-right:0px;
+        right: 310px;
+        background-image: url("/BocoElections2016/images/twitter.png");
+    }
+
+    .navbar-logo {
+        position:absolute;
+        margin-top:-10px;
+        margin-right:0px;
+        right: 50px;
+        width:209px; /*width of your image*/
+        height:55px; /*height of your image*/
+        background-image: url("/BocoElections2016/images/logo.png");
+        display: block;
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
